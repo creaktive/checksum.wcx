@@ -21,6 +21,13 @@
 	Site:	http://sysdlabs.hypermart.net/
 ****************************************************************************/
 
+
+/* non-critical optimizations (combine with UPX :) */
+
+#pragma comment(linker,"/ENTRY:DllMain")
+#pragma comment(linker,"/NODEFAULTLIB:libcmt.lib")
+#pragma comment(lib,"msvcrt.lib")
+
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
@@ -32,7 +39,7 @@
 
 
 #define SUM_BUFSIZE 32768
-#define VERSION "v0.2"
+#define VERSION "v0.2a"
 
 
 typedef struct
@@ -426,9 +433,9 @@ void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 		"Provides MD5/SHA1 checksum generator/checker\n"
 		"from within Total Commander packer interface\n\n"
 
-		"Copyright © 2003  Stanislaw Y. Pusep\n"
+		"Copyright © 2004  Stanislaw Y. Pusep\n"
 		"stanis@linuxmail.org\n"
-		"http://sysdlabs.hypermart.net/proj/",
+		"http://sysdlabs.hypermart.net/proj/tc.shtml",
 		
 		"MD5/SHA1 checksum wrapper " VERSION,
 		

@@ -1,5 +1,5 @@
-MD5/SHA1 checksum generator/checker v0.2 for Total Commander
-============================================================
+MD5/SHA1 checksum generator/checker v0.2a for Total Commander
+=============================================================
 
 
  * How to install this plugin (32 bit only):
@@ -73,6 +73,8 @@ same, just replace every "md5" you see by "sha" :)
 * Bugs:
 -------
 
+ o You can mess MD5 with SHA1 checksums in same file. This has some funny
+   consequences... Try adding both SHA1 & MD5 sums for same filename :P
  o Total Commander integration is a mess.
  o NOT overwriting sensitive data is user's responsability :)
  o I tried to make the best ".md5" parser I could with no Perl regexp.
@@ -81,6 +83,21 @@ same, just replace every "md5" you see by "sha" :)
    displayed instead of file date/time and size... But if you take a look
    at file "Properties"... You see amazing size of 4,294,967,295 Bytes,
    date 15/31/2107 and time 31:63:62. Guess why :)
+
+
+* ChangeLog:
+------------
+
+ - v0.1 
+	* first public release
+ - v0.2
+	* added support for SHA1
+	* renamed to "checksum.wcx"
+ - v0.2a
+	* checksum.wcx size dropped from 25.5 Kb to 8 Kb (!!!)
+	* replaced is*() functions from runtime by c00l macro hacks
+	* fixed memory leak in parser
+	* added ChangeLog :)
 
 
 * TODO:

@@ -31,7 +31,7 @@ sum_node *sum_parse(const char *list)
 	char *line, *sum, *name;
 	int i, j, len, type;
 	char *p, *q;
-	sum_node *head = NULL, *last = NULL, *new;
+	sum_node *head = NULL, *last = NULL, *newone;
 
 	if ((f = fopen(list, "rt")) == NULL)
 		return NULL;
@@ -40,7 +40,7 @@ sum_node *sum_parse(const char *list)
 	while (fgets(buf, sizeof(buf), f) != NULL)
 	{
 		line	= NULL;
-		sum	= NULL;
+		sum		= NULL;
 		name	= NULL;
 		type	= -1;
 
@@ -67,7 +67,7 @@ sum_node *sum_parse(const char *list)
 						if (!isxdigit(line[i+j]))
 							break;
 
-					if (!isalnum(line[i-1]) && !isalnum(line[i+j]))
+					if ((!i || !isalnum(line[i-1])) && !isalnum(line[i+j]))
 					{
 						type = j;
 						if (type == MD5 || type == SHA1)
@@ -84,6 +84,7 @@ sum_node *sum_parse(const char *list)
 					// filename after checksum
 					for (p = sum + type; p < line + len; p++)
 						if (!isspace(*p) && (*p != '*'))
+						//if (*p!=0x20 && (*p != '*'))
 						{
 							name = p;
 							break;
@@ -112,27 +113,27 @@ sum_node *sum_parse(const char *list)
 
 					if (name != NULL)
 					{
-						new = (sum_node *) malloc(sizeof(sum_node));
+						newone = (sum_node *) malloc(sizeof(sum_node));
 
-						new->type = type;
+						newone->type = type;
 
 						len = strlen(name) + 1;
-						new->filename = (char *) malloc(len);
+						newone->filename = (char *) malloc(len);
 
-						memset(new->filename, '\0', len);
-						strncpy(new->filename, name, len);
+						memset(newone->filename, '\0', len);
+						strncpy(newone->filename, name, len);
 
-						memset(new->checksum, '\0', sizeof(new->checksum));
+						memset(newone->checksum, '\0', sizeof(newone->checksum));
 						for (i = 0; i < type; i++)
-							new->checksum[i] = tolower(sum[i]);
+							newone->checksum[i] = tolower(sum[i]);
 
-						new->next = NULL;
+						newone->next = NULL;
 
 						if (last == NULL)
-							head = new;
+							head = newone;
 						else
-							last->next = new;
-						last = new;
+							last->next = newone;
+						last = newone;
 					}
 				}
 			}
