@@ -25,8 +25,9 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
-//#include <ctype.h>
 /* eradicate "Microsoft Visual C++ Runtime Library" */
+#ifdef NO_RUNTIME
+
 #undef isspace
 #define isspace(c)	(((c>=0x9&&c<=0xd)||(c==0x20))?1:0)
 #undef isxdigit
@@ -35,6 +36,12 @@
 #define isalnum(c)	(((c>='0'&&c<='9')||(c>='a'&&c<='z')||(c>='A'&&c<='Z'))?1:0)
 #undef tolower
 #define tolower(c)	((c>='A'&&c<='Z')?(c+('a'-'A')):c)
+
+#else
+
+#include <ctype.h>
+
+#endif
 
 #include <malloc.h>
 #include <memory.h>

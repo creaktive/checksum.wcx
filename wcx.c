@@ -24,9 +24,11 @@
 
 /* non-critical optimizations (combine with UPX :) */
 
+#ifdef NO_RUNTIME
 #pragma comment(linker,"/ENTRY:DllMain")
 #pragma comment(linker,"/NODEFAULTLIB:libcmt.lib")
 #pragma comment(lib,"msvcrt.lib")
+#endif
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -39,7 +41,7 @@
 
 
 #define SUM_BUFSIZE 32768
-#define VERSION "v0.2a"
+#define VERSION "v0.2b"
 
 
 typedef struct
@@ -168,7 +170,7 @@ char *md5sum(char *filename)
 	unsigned char keybuf[16];
 	char *checksum, *p;
 
-	if ((h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ+FILE_SHARE_WRITE+FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+	if ((h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ+FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		return NULL;
 
 	buf = (char *) malloc(SUM_BUFSIZE);
@@ -204,7 +206,7 @@ char *sha1sum(char *filename)
 	unsigned char keybuf[20];
 	char *checksum, *p;
 
-	if ((h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ+FILE_SHARE_WRITE+FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+	if ((h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ+FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		return NULL;
 
 	buf = (char *) malloc(SUM_BUFSIZE);

@@ -1,4 +1,4 @@
-MD5/SHA1 checksum generator/checker v0.2a for Total Commander
+MD5/SHA1 checksum generator/checker v0.2b for Total Commander
 =============================================================
 
 
@@ -98,6 +98,8 @@ same, just replace every "md5" you see by "sha" :)
 	* replaced is*() functions from runtime by c00l macro hacks
 	* fixed memory leak in parser
 	* added ChangeLog :)
+ - v0.2b
+	* removed FILE_SHARE_DELETE flag from CreateFile() as it's NT-specific
 
 
 * TODO:
