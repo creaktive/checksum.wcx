@@ -22,30 +22,12 @@
 ****************************************************************************/
 
 
-#ifndef _PARSER_H
-#define _PARSER_H
+#ifndef _COMMON_H
+#define _COMMON_H
 
-#include <ctype.h>
-#include <malloc.h>
 #include <memory.h>
-#include <stdio.h>
-#include <string.h>
 
-enum sumsize
-{
-	MD5		= 32,
-	SHA1	= 40,
-};
-
-typedef struct sum_node_struct
-{
-	char *filename;
-	char checksum[64];
-	int type;
-	struct sum_node_struct *next;
-} sum_node;
-
-sum_node *sum_parse(const char *list);
-void sum_free(sum_node *head);
+typedef unsigned int word32;
+typedef unsigned int uint32;
 
 #endif

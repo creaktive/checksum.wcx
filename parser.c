@@ -1,5 +1,5 @@
 /****************************************************************************
-	This file is part of MD5 checksum generator/checker plugin for
+	This file is part of MD5/SHA1 checksum generator/checker plugin for
 	Total Commander.
 	Copyright (C) 2003  Stanislaw Y. Pusep
 
@@ -24,14 +24,14 @@
 
 #include "parser.h"
 
-md5_node *md5_parse(const char *list)
+sum_node *sum_parse(const char *list)
 {
 	FILE *f;
 	char buf[512];
-	char *line = NULL, *md5 = NULL, *name = NULL;
-	int i, j, len;
+	char *line, *sum, *name;
+	int i, j, len, type;
 	char *p, *q;
-	md5_node *head = NULL, *last = NULL, *new;
+	sum_node *head = NULL, *last = NULL, *new;
 
 	if ((f = fopen(list, "rt")) == NULL)
 		return NULL;
@@ -39,6 +39,11 @@ md5_node *md5_parse(const char *list)
 	memset(buf, '\0', sizeof(buf));
 	while (fgets(buf, sizeof(buf), f) != NULL)
 	{
+		line	= NULL;
+		sum	= NULL;
+		name	= NULL;
+		type	= -1;
+
 		for (i = 0; i < sizeof(buf); i++)
 			if (!isspace(buf[i]))
 			{
@@ -46,7 +51,7 @@ md5_node *md5_parse(const char *list)
 				break;
 			}
 
-		if ((line != NULL) && strlen(line))
+		if ((line != NULL) && (len = strlen(line)))
 		{
 			for (i = strlen(buf) - 1; i >= 0; i--)
 				if (isspace(buf[i]))
@@ -54,28 +59,30 @@ md5_node *md5_parse(const char *list)
 				else
 					break;
 
-			len = strlen(line);
 			if (len > (32 + 1))
 			{
 				for (i = 0; i <= len - 32; i++)
 				{
-					for (j = 0; j < 32; j++)
+					for (j = 0; i+j < len; j++)
 						if (!isxdigit(line[i+j]))
 							break;
 
-					if (j == 32)
+					if (!isalnum(line[i-1]) && !isalnum(line[i+j]))
 					{
-						if (!isalnum(line[i+j]))
-							md5 = line + i;
-						break;
+						type = j;
+						if (type == MD5 || type == SHA1)
+						{
+							sum = line + i;
+							break;
+						}
 					}
 				}
 
-				if (md5 != NULL)
+				if (sum != NULL)
 				{
-					// classical md5sum scheme:
+					// classical checksum scheme:
 					// filename after checksum
-					for (p = md5 + 32; p < line + len; p++)
+					for (p = sum + type; p < line + len; p++)
 						if (!isspace(*p) && (*p != '*'))
 						{
 							name = p;
@@ -83,9 +90,9 @@ md5_node *md5_parse(const char *list)
 						}
 
 					// filename before checksum?
-					if (name == NULL)
+					if ((name == NULL) || (*name == '\0'))
 					{
-						for (p = md5 - 1, q = NULL; p >= line; p--)
+						for (p = sum - 1, q = NULL; p >= line; p--)
 							if (isalnum(*p) ||
 								(*p=='.') ||
 								(*p=='_') ||
@@ -105,7 +112,9 @@ md5_node *md5_parse(const char *list)
 
 					if (name != NULL)
 					{
-						new = (md5_node *) malloc(sizeof(md5_node));
+						new = (sum_node *) malloc(sizeof(sum_node));
+
+						new->type = type;
 
 						len = strlen(name) + 1;
 						new->filename = (char *) malloc(len);
@@ -114,9 +123,8 @@ md5_node *md5_parse(const char *list)
 						strncpy(new->filename, name, len);
 
 						memset(new->checksum, '\0', sizeof(new->checksum));
-						//strncpy(new->checksum, md5, 32);
-						for (i = 0; i < 32; i++)
-							new->checksum[i] = tolower(md5[i]);
+						for (i = 0; i < type; i++)
+							new->checksum[i] = tolower(sum[i]);
 
 						new->next = NULL;
 
@@ -130,9 +138,6 @@ md5_node *md5_parse(const char *list)
 			}
 		}
 
-		line	= NULL;
-		md5	= NULL;
-		name	= NULL;
 		memset(buf, '\0', sizeof(buf));
 	}
 
@@ -141,9 +146,9 @@ md5_node *md5_parse(const char *list)
 	return head;
 }
 
-void md5_free(md5_node *head)
+void sum_free(sum_node *head)
 {
-	md5_node *p, *q;
+	sum_node *p, *q;
 	for (p = head; p != NULL; p = q)
 	{
 		q = p->next;

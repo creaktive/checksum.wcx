@@ -1,34 +1,40 @@
-MD5 checksum generator/checker v0.1 for Total Commander
-=======================================================
+MD5/SHA1 checksum generator/checker v0.2 for Total Commander
+============================================================
 
 
  * How to install this plugin (32 bit only):
 --------------------------------------------
 
-1. Unzip the "md5.wcx" to the Total Commander or plugins directory
-2. In Windows Commander 4.0 (or newer) or Total Commander,
+ 1. Unzip the "checksum.wcx" to the Total Commander or plugins directory
+ 2. In Windows Commander 4.0 (or newer) or Total Commander,
    choose 'Configuration => Options'
-3. Open the 'Packer' page
-4. Click 'Configure packer extension WCXs'
-5. type 'md5' as the extension
-6. Click 'New type', and select the "md5.wcx" file
-7. Click OK
+ 3. Open the 'Packer' page
+ 4. Click 'Configure packer extension WCXs'
+ 5. Type 'md5' as the extension
+ 6. Click 'New type', and select the "checksum.wcx" file
+ 7. Click OK and then 'Configure packer extension WCXs'
+ 8. Now type 'sha' as the extension
+ 9. Click 'New type', and select the "checksum.wcx" file again
+10. Click OK
 
 
  * What it does:
 ----------------
 
-Provides MD5 checksum generator/checker from within Total Commander
-packer interface. It is able to generate ".md5" list files acceptable
-by GNU md5sum utility. There is also 'virtual' browser for ".md5" list
-files. You can "enter" into ".md5" listing as it were archive, test it
-and use Lister to see original/computed MD5 checksums *BUT* it is only
-possible if ".md5" file is stored in root path of all files listed
-inside it. See "Usage" section for details.
+Provides MD5 and SHA1 checksum generator/checker from within Total Commander
+packer interface. It is able to generate ".md5" and ".sha" list files
+acceptable by GNU respectively md5sum and sha1sum utilities. There is also
+'virtual' browser for these list files. You can "enter" into listing as it
+were archive, test it and use Lister to see original/computed MD5/SHA1
+checksums *BUT* it is only possible if ".md5" or ".sha" file is stored in
+root path of all files listed inside it. See "Usage" section for details.
 
 
  * Usage:
 ---------
+
+(This section uses MD5 checksums as example; for SHA1 the procedure is the
+same, just replace every "md5" you see by "sha" :)
 
  I) Generate MD5 checksum:
    1. Select files you wish to compute checksum.
@@ -37,6 +43,8 @@ inside it. See "Usage" section for details.
    4. PLEASE NOTE THAT ARCHIVE PATH WILL BE IGNORED!!!
       ".md5" 'archive' is *ALWAYS* generated in current directory
       (where checked files are), and NOT in opposite panel!
+      The only exception is creating checksum of files stored on CD-ROM
+      media as there's no way to create files there.
    5. Press OK and check CURRENT directory for ".md5" list generated.
 
  II) Verify MD5 checksum:
@@ -86,14 +94,14 @@ inside it. See "Usage" section for details.
 
  o Modify/delete support. I suggest you to use Notepad for such operations
    on ".md5" list files :)
- o Improve MD5 algorithm coding critic parts in assembly... Certainly your
+ o Improve algorithms coding critic parts in assembly... Certainly your
    storage media is slower than your CPU anyway :)
 
 
  * References:
 --------------
 
- o MD5 implementation for PuTTY. Written directly from the spec by
+ o MD5 and STA1 implementations for PuTTY. Written directly from the spec by
    Simon Tatham. http://www.chiark.greenend.org.uk/~sgtatham/putty/
  o "WCX Writer's Reference" by Christian Ghisler & Jiri Barton
  o PACK Plugin for Windows Commander by DarkOne
@@ -103,7 +111,7 @@ inside it. See "Usage" section for details.
 -----------
 
 /****************************************************************************
-	This file is part of MD5 checksum generator/checker plugin for
+	This file is part of MD5/SHA1 checksum generator/checker plugin for
 	Total Commander.
 	Copyright (C) 2003  Stanislaw Y. Pusep
 

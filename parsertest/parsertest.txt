@@ -1,0 +1,20 @@
+# let's test some MD5:
+d8fba60a9a744be7f195d9e241d8f201 *A_Change_Of_Seasons.mp3
+	ad4652e2dcfd4a0ecf91a2c01a7defd5	License.txt
+
+MD5 (4.9-i386-disc1.iso) = 9195be15a4c8c54a6a6a23272ddacaae
+MD5 (4.9-i386-disc2.iso) = 51d28c35308cc916b9a9bfcacb3146b8 
+
+X0767b4ffd218d09400627fbccc2d094 *KNOPPIX_V3.3-2003-11-14-EN.iso
+e0767b4ffd218d09400627fbccc2d09Y *KNOPPIX_V3.3-2003-11-14-EN.iso
+e0767b4ffd218d09400627fbccc2d094Z *KNOPPIX_V3.3-2003-11-14-EN.iso
+e0767b4ffd218d09400627fbccc2d094 *KNOPPIX_V3.3-2003-11-14-EN.iso
+
+%really weird format% (FILE *) == 0123456789ABCDEF0123456789ABCDEF
+
+
+and now some SHA1:
+X8dee552e0a7fb8a39f8599fc8260810199fb389 *CFAH_WinTest.exe
+c8dee552e0a7fb8a39f8599fc8260810199fb38Y *CFAH_WinTest.exe
+c8dee552e0a7fb8a39f8599fc8260810199fb389Z *CFAH_WinTest.exe
+c8dee552e0a7fb8a39f8599fc8260810199fb389 *CFAH_WinTest.exe

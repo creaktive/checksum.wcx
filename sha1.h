@@ -22,30 +22,27 @@
 ****************************************************************************/
 
 
-#ifndef _PARSER_H
-#define _PARSER_H
+/*
+ * SHA1 implementation for PuTTY. Written directly from the spec by
+ * Simon Tatham.
+ */
 
-#include <ctype.h>
-#include <malloc.h>
-#include <memory.h>
-#include <stdio.h>
-#include <string.h>
+#ifndef _SHA1_H
+#define _SHA1_H
 
-enum sumsize
-{
-	MD5		= 32,
-	SHA1	= 40,
-};
+#include "common.h"
 
-typedef struct sum_node_struct
-{
-	char *filename;
-	char checksum[64];
-	int type;
-	struct sum_node_struct *next;
-} sum_node;
+typedef struct {
+    uint32 h[5];
+    unsigned char block[64];
+    int blkused;
+    uint32 lenhi, lenlo;
+} SHA_State;
 
-sum_node *sum_parse(const char *list);
-void sum_free(sum_node *head);
+#define rol(x,y) ( ((x) << (y)) | (((uint32)x) >> (32-y)) )
+
+void SHA_Init(SHA_State * s);
+void SHA_Bytes(SHA_State * s, void *p, int len);
+void SHA_Final(SHA_State * s, unsigned char *output);
 
 #endif

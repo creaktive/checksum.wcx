@@ -1,5 +1,5 @@
 /****************************************************************************
-	This file is part of MD5 checksum generator/checker plugin for
+	This file is part of MD5/SHA1 checksum generator/checker plugin for
 	Total Commander.
 	Copyright (C) 2003  Stanislaw Y. Pusep
 

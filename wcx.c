@@ -1,5 +1,5 @@
 /****************************************************************************
-	This file is part of MD5 checksum generator/checker plugin for
+	This file is part of MD5/SHA1 checksum generator/checker plugin for
 	Total Commander.
 	Copyright (C) 2003  Stanislaw Y. Pusep
 
@@ -21,16 +21,18 @@
 	Site:	http://sysdlabs.hypermart.net/
 ****************************************************************************/
 
+#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 #include <direct.h>
 #include "wcxhead.h"
 #include "md5.h"
+#include "sha1.h"
 #include "parser.h"
 
 
-#define MD5_BUFSIZE 32768
-#define VERSION "v0.1"
+#define SUM_BUFSIZE 32768
+#define VERSION "v0.2"
 
 
 typedef struct
@@ -38,11 +40,11 @@ typedef struct
 	char archive[MAX_PATH];
 	char cwd[MAX_PATH];
 	char file[MAX_PATH];
-	char sum[33];
+	char sum[64];
 	unsigned int size;
-	md5_node *ptr;
-	md5_node *list;
-} md5_handle;
+	sum_node *ptr;
+	sum_node *list;
+} sum_handle;
 
 
 tProcessDataProc progress;
@@ -66,17 +68,17 @@ BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 
 HANDLE __stdcall OpenArchive(tOpenArchiveData *ArchiveData)
 {
-	md5_handle *md5H;
+	sum_handle *sumH;
 	char *p;
 
-	md5H = (md5_handle *) malloc(sizeof(md5_handle));
-	strncpy(md5H->archive, ArchiveData->ArcName, MAX_PATH);
+	sumH = (sum_handle *) malloc(sizeof(sum_handle));
+	strncpy(sumH->archive, ArchiveData->ArcName, MAX_PATH);
 
 	if ((ArchiveData->ArcName[1] == ':') ||
 		((ArchiveData->ArcName[0] == '\\') && (ArchiveData->ArcName[1] == '\\')))
 	{
-		strncpy(md5H->cwd, ArchiveData->ArcName, MAX_PATH);
-		for (p = md5H->cwd + strlen(md5H->cwd); p >= md5H->cwd; p--)
+		strncpy(sumH->cwd, ArchiveData->ArcName, MAX_PATH);
+		for (p = sumH->cwd + strlen(sumH->cwd); p >= sumH->cwd; p--)
 			if (*p == '\\' || *p == '/')
 			{
 				*p = '\0';
@@ -84,12 +86,12 @@ HANDLE __stdcall OpenArchive(tOpenArchiveData *ArchiveData)
 			}
 	}
 	else
-		_getcwd(md5H->cwd, MAX_PATH);
+		_getcwd(sumH->cwd, MAX_PATH);
 
-	md5H->ptr = NULL;
+	sumH->ptr = NULL;
 
-	if ((md5H->list = md5_parse(md5H->archive)) != NULL)
-		return md5H;
+	if ((sumH->list = sum_parse(sumH->archive)) != NULL)
+		return sumH;
 	else
 	{
 		ArchiveData->OpenResult = E_EOPEN;
@@ -100,48 +102,48 @@ HANDLE __stdcall OpenArchive(tOpenArchiveData *ArchiveData)
 
 int __stdcall ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 {
-	md5_handle *md5H = hArcData;
+	sum_handle *sumH = hArcData;
 	WIN32_FILE_ATTRIBUTE_DATA stat;
 	FILETIME local;
 	WORD date, time;
 
-	if (md5H->ptr == NULL)
-		md5H->ptr = md5H->list;
+	if (sumH->ptr == NULL)
+		sumH->ptr = sumH->list;
 	else
-		md5H->ptr = md5H->ptr->next;
+		sumH->ptr = sumH->ptr->next;
 
-	if (md5H->ptr == NULL)
+	if (sumH->ptr == NULL)
 	{
-		md5H->ptr = md5H->list;
+		sumH->ptr = sumH->list;
 		return E_END_ARCHIVE;
 	}
 
-	memset(md5H->file, '\0', MAX_PATH);
-	strncpy(md5H->file, md5H->cwd, MAX_PATH);
-	strncat(md5H->file, "\\", MAX_PATH);
-	strncat(md5H->file, md5H->ptr->filename, MAX_PATH);
-	fix_path(md5H->file, '/', '\\');
+	memset(sumH->file, '\0', MAX_PATH);
+	strncpy(sumH->file, sumH->cwd, MAX_PATH);
+	strncat(sumH->file, "\\", MAX_PATH);
+	strncat(sumH->file, sumH->ptr->filename, MAX_PATH);
+	fix_path(sumH->file, '/', '\\');
 
-	memset(md5H->sum, '\0', 33);
-	strncpy(md5H->sum, md5H->ptr->checksum, 32);
+	memset(sumH->sum, '\0', sizeof(sumH->sum));
+	strncpy(sumH->sum, sumH->ptr->checksum, sizeof(sumH->sum));
 
 	memset(HeaderData, '\0', sizeof(HeaderData));
-	strncpy(HeaderData->ArcName, md5H->archive, MAX_PATH);
-	strncpy(HeaderData->FileName, md5H->ptr->filename, MAX_PATH);
+	strncpy(HeaderData->ArcName, sumH->archive, MAX_PATH);
+	strncpy(HeaderData->FileName, sumH->ptr->filename, MAX_PATH);
 	fix_path(HeaderData->FileName, '/', '\\');
 
-	if (GetFileAttributesEx(md5H->file, GetFileExInfoStandard, &stat))
+	if (GetFileAttributesEx(sumH->file, GetFileExInfoStandard, &stat))
 	{
 		FileTimeToLocalFileTime(&stat.ftLastWriteTime, &local);
 		FileTimeToDosDateTime(&local, &date, &time);
-		md5H->size = stat.nFileSizeLow;
+		sumH->size = stat.nFileSizeLow;
 		HeaderData->UnpSize		= stat.nFileSizeLow;
 		HeaderData->FileTime	= (date << 16) | time;
 		HeaderData->FileAttr	= stat.dwFileAttributes;
 	}
 	else
 	{
-		md5H->size = -1;
+		sumH->size = -1;
 		HeaderData->UnpSize		= -1;
 		HeaderData->FileTime	= -1;
 	}
@@ -159,16 +161,13 @@ char *md5sum(char *filename)
 	unsigned char keybuf[16];
 	char *checksum, *p;
 
-	checksum = (char *) malloc(64);
-	memset(checksum, '\0', 64);
-
 	if ((h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ+FILE_SHARE_WRITE+FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		return NULL;
 
-	buf = (char *) malloc(MD5_BUFSIZE);
+	buf = (char *) malloc(SUM_BUFSIZE);
 	MD5Init(&md5c);
 
-	while (ReadFile(h, buf, MD5_BUFSIZE, &read, NULL))
+	while (ReadFile(h, buf, SUM_BUFSIZE, &read, NULL))
 	{
 		MD5Update(&md5c, buf, read);
 		aborted = progress(filename, read);
@@ -180,6 +179,44 @@ char *md5sum(char *filename)
 	CloseHandle(h);
 	free(buf);
 
+	checksum = (char *) malloc(33);
+	memset(checksum, '\0', 33);
+	for (i = 0, p = checksum; i < sizeof(keybuf); i++, p += 2)
+		sprintf(p, "%02x", keybuf[i]);
+
+	return checksum;
+}
+
+
+char *sha1sum(char *filename)
+{
+	HANDLE *h;
+	char *buf;
+	SHA_State sha1s;
+	unsigned int read, i;
+	unsigned char keybuf[20];
+	char *checksum, *p;
+
+	if ((h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ+FILE_SHARE_WRITE+FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+		return NULL;
+
+	buf = (char *) malloc(SUM_BUFSIZE);
+	SHA_Init(&sha1s);
+
+	while (ReadFile(h, buf, SUM_BUFSIZE, &read, NULL))
+	{
+		SHA_Bytes(&sha1s, buf, read);
+		aborted = progress(filename, read);
+		if ((read == 0) || (aborted == 0))
+			break;
+	}
+
+	SHA_Final(&sha1s, keybuf);
+	CloseHandle(h);
+	free(buf);
+
+	checksum = (char *) malloc(41);
+	memset(checksum, '\0', 41);
 	for (i = 0, p = checksum; i < sizeof(keybuf); i++, p += 2)
 		sprintf(p, "%02x", keybuf[i]);
 
@@ -189,18 +226,27 @@ char *md5sum(char *filename)
 
 int __stdcall ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName)
 {
-	md5_handle *md5H = hArcData;
-	char message[MAX_PATH], checksum[33], *sum;
+	sum_handle *sumH = hArcData;
+	char message[MAX_PATH], checksum[64], *sum, *type, fail[64];
 	FILE *f;
 	BOOL is_ok = FALSE;
+	int typen;
 
 	if (Operation != PK_SKIP)
 	{
-		if (
-				(md5H->size != -1) &&
-				((sum = md5sum(md5H->file)) != NULL)
-			)
+		if (sumH->size != -1)
 		{
+			typen = sumH->ptr->type;
+			switch (typen)
+			{
+				case MD5:	type = "MD5";	sum = md5sum(sumH->file);	break;
+				case SHA1:	type = "SHA1";	sum = sha1sum(sumH->file);	break;
+				default: sum = NULL;
+			}
+
+			if (sum == NULL)
+				return E_EREAD;
+
 			memset(checksum, '\0', sizeof(checksum));
 			strncpy(checksum, sum, sizeof(checksum));
 			free(sum);
@@ -208,12 +254,17 @@ int __stdcall ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *
 			if (aborted == 0)
 				return E_EABORTED;
 
-			is_ok = (strncmp(md5H->sum, checksum, 32) == 0) ? TRUE : FALSE;
+			is_ok = (strncmp(sumH->sum, checksum, sizeof(sumH->sum)) == 0) ? TRUE : FALSE;
 		}
 		else
 		{
-			md5H->size = -1;
-			MessageBox(NULL, md5H->file, "File not found!", MB_OK+MB_ICONWARNING);
+			switch (strlen(sumH->sum))
+			{
+				case MD5:	type = "MD5";	typen = MD5;	break;
+				case SHA1:	type = "SHA1";	typen = SHA1;	break;
+			}
+
+			MessageBox(NULL, sumH->file, "File not found!", MB_OK|MB_ICONWARNING);
 		}
 
 		if (Operation == PK_TEST)
@@ -231,10 +282,13 @@ int __stdcall ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *
 
 			if ((f = fopen(message, "wt")) != NULL)
 			{
-				fprintf(f, "%s\n\n", md5H->file);
-				fprintf(f, "expected:\t%s\n", md5H->sum);
-				fprintf(f, "computed:\t%s\n", (md5H->size != -1) ? checksum : "????????????????????????????????");
-				fprintf(f, "\nMD5 checksum %s!\n", is_ok ? "OK" : "FAILED");
+				memset(fail, '?', sizeof(fail));
+				fail[typen] = '\0';
+
+				fprintf(f, "%s\n\n", sumH->file);
+				fprintf(f, "expected:\t%s\n", sumH->sum);
+				fprintf(f, "computed:\t%s\n", (sumH->size != -1) ? checksum : fail);
+				fprintf(f, "\n%s checksum %s!\n", type, is_ok ? "OK" : "FAILED");
 				fclose(f);
 			}
 			else
@@ -248,10 +302,10 @@ int __stdcall ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *
 
 int __stdcall CloseArchive(HANDLE *hArcData)
 {
-	md5_handle *md5H = (md5_handle *) hArcData;
+	sum_handle *sumH = (sum_handle *) hArcData;
 
-	md5_free(md5H->list);
-	free(md5H);
+	sum_free(sumH->list);
+	free(sumH);
 	
 	return 0;
 }
@@ -263,18 +317,43 @@ int __stdcall PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *Ad
 	char *p;
 	char disk[MAX_PATH], arch[MAX_PATH];
 	char *checksum;
+	int type;
 
 	if (Flags == PK_PACK_MOVE_FILES)
 		return E_NOT_SUPPORTED;
 
-	strncpy(disk, SrcPath, MAX_PATH);
-	for (p = PackedFile + strlen(PackedFile); p >= PackedFile; p--)
+	strncpy(arch, SrcPath, MAX_PATH);
+	for (p = arch; *p; p++)
 		if (*p == '\\')
 		{
-			p++;
+			*(++p) = '\0';
 			break;
 		}
-	strncat(disk, p, MAX_PATH);
+
+	if (GetDriveType(arch) == DRIVE_CDROM)
+		strncpy(disk, PackedFile, MAX_PATH);
+	else
+	{
+		strncpy(disk, SrcPath, MAX_PATH);
+		for (p = PackedFile + strlen(PackedFile); p >= PackedFile; p--)
+			if (*p == '\\')
+			{
+				p++;
+				break;
+			}
+		strncat(disk, p, MAX_PATH);
+	}
+
+	p = PackedFile + strlen(PackedFile) - 4;
+	if (!strnicmp(p, ".md5", 4))
+		type = MD5;
+	else if (!strnicmp(p, ".sha", 4))
+		type = SHA1;
+	else
+	{
+		MessageBox(NULL, "Extension must be .MD5 or .SHA!", NULL, MB_OK|MB_ICONSTOP);
+		return E_ECREATE;
+	}
 
 	if ((f = fopen(disk, "wt")) != NULL)
 	{
@@ -294,7 +373,14 @@ int __stdcall PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *Ad
 			//fprintf(f, "[%s] [%s]\n", disk, arch);
 			if (disk[strlen(disk) - 1] != '\\')
 			{
-				if ((checksum = md5sum(disk)) == NULL)
+				if (type == MD5)
+					checksum = md5sum(disk);
+				else if (type == SHA1)
+					checksum = sha1sum(disk);
+				else
+					checksum = NULL;
+
+				if (checksum == NULL)
 				{
 					fclose(f);
 					return E_EOPEN;
@@ -337,14 +423,14 @@ int __stdcall GetPackerCaps(void)
 void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
 	MessageBox(Parent,
-		"Provides MD5 checksum generator/checker\n"
+		"Provides MD5/SHA1 checksum generator/checker\n"
 		"from within Total Commander packer interface\n\n"
 
 		"Copyright © 2003  Stanislaw Y. Pusep\n"
 		"stanis@linuxmail.org\n"
 		"http://sysdlabs.hypermart.net/proj/",
 		
-		"MD5 checksum wrapper " VERSION,
+		"MD5/SHA1 checksum wrapper " VERSION,
 		
 		MB_OK|MB_ICONINFORMATION);
 

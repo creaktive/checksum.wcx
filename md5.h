@@ -1,5 +1,5 @@
 /****************************************************************************
-	This file is part of MD5 checksum generator/checker plugin for
+	This file is part of MD5/SHA1 checksum generator/checker plugin for
 	Total Commander.
 	Copyright (C) 2003  Stanislaw Y. Pusep
 
@@ -30,10 +30,7 @@
 #ifndef _MD5_H
 #define _MD5_H
 
-#include <memory.h>
-
-typedef unsigned int word32;
-typedef unsigned int uint32;
+#include "common.h"
 
 typedef struct {
     uint32 h[4];
